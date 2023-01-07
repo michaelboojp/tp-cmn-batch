@@ -1,0 +1,75 @@
+{
+    "Comment": "if batch is not running, switch alb rule",
+    "StartAt": "getBatchRunningStatus",
+    "States": {
+        "getBatchRunningStatus": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+            "FunctionName": "${CheckBatchStatusLambdaArn}" 
+            },
+            "Retry": [
+            {
+                "ErrorEquals": [
+                "States.Timeout",
+                "Lambda.Unknown"
+                ],
+                "IntervalSeconds": 60,
+                "MaxAttempts": 5,
+                "BackoffRate": 1
+            }
+            ],
+            "ResultPath": "$.taskresult",
+            "Next": "checkBatchRunning"
+        },
+        "checkBatchRunning": {
+            "Type": "Choice",
+            "Choices": [
+            {
+                "Variable": "$.taskresult.Payload",
+                "NumericEquals": 1,
+                "Next": "waite5minus"
+            },
+            {
+                "Variable": "$.taskresult.Payload",
+                "NumericEquals": 0,
+                "Next": "ALBSeriviceIn"
+            },
+            {
+                "Variable": "$.taskresult.Payload",
+                "NumericGreaterThan": 2,
+                "Next": "waite5minus"
+            }
+            ],
+            "Default": "waite5minus"
+        },
+        "ALBSeriviceIn": {
+            "Type": "Task",
+            "ResultPath": "$",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+            "FunctionName": "${SwitchALBRuleLambdaArn}" ,
+            "Payload": {
+                "switch-type": "service-in"
+            }
+            },
+            "Retry": [
+            {
+                "ErrorEquals": [
+                "States.Timeout",
+                "Lambda.Unknown"
+                ],
+                "IntervalSeconds": 60,
+                "MaxAttempts": 5,
+                "BackoffRate": 1
+            }
+            ],
+            "End": true
+        },
+        "waite5minus": {
+            "Type": "Wait",
+            "Seconds": 300,
+            "Next": "getBatchRunningStatus"
+        }
+    }
+}
