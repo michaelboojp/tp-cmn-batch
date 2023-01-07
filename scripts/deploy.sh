@@ -12,7 +12,7 @@ if [ $# -ne 1 ]; then
   echo
   exit 1
 else
-  ENV_ID=$1
+  ENV_ID=${1,,}
 fi
 
 ############################
@@ -49,7 +49,8 @@ CICD_REPOSITORY=$(cat envs/${ENV_ID}.conf | grep ^CicdRepository | head -1 | cut
 PARAMS_star=$(cat envs/${ENV_ID}.conf | grep -v '^ *#' | grep '*' | grep -e '^.*=.*$' | sed "s/^\(.*\)=\(.*\)$/\1='\2'/g")
 #
 # 変数名の末尾に^を入れることで、先頭を大文字に変換
-STACK_NAME_PREFIX=${COMPANY_ID}${SYSTEM_ID}${SUB_SYSTEM_ID}${ENV_ID}
+# STACK_NAME_PREFIX=${COMPANY_ID}${SYSTEM_ID}${SUB_SYSTEM_ID}${ENV_ID}
+STACK_NAME_PREFIX=${COMPANY_ID^}${SYSTEM_ID^}${SUB_SYSTEM_ID^}${ENV_ID^}
 
 echo """
 ===============================
