@@ -18,6 +18,11 @@ fi
 ############################
 # 定数定義
 ############################
+# CloudFormationから取得(全ドメインで共通)
+COMPANY_ID=$(aws cloudformation list-exports | jq '[.Exports[]]' | jq 'map(select( .Name == "'${ENV_ID}'-cmn-CompanyId" ))' | jq '.[].Value' | head -1  | sed 's/"//g' )
+SYSTEM_ID=$(aws cloudformation list-exports | jq '[.Exports[]]' | jq 'map(select( .Name == "'${ENV_ID}'-cmn-SystemId" ))' | jq '.[].Value' | head -1  | sed 's/"//g' )
+ENVNAME=$(aws cloudformation list-exports | jq '[.Exports[]]' | jq 'map(select( .Name == "'${ENV_ID}'-cmn-EnvName" ))' | jq '.[].Value' | head -1  | sed 's/"//g' )
+SYSTEM_NAME=$(aws cloudformation list-exports | jq '[.Exports[]]' | jq 'map(select( .Name == "'${ENV_ID}'-cmn-SystemName" ))' | jq '.[].Value' | head -1  | sed 's/"//g' )
 
 #  改行コードを変数LFに設定
 LF="
