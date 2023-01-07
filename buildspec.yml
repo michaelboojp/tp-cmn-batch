@@ -1,0 +1,11 @@
+version: 0.2
+
+phases:
+    build:
+        commands:
+            #docker build, push
+            - bash -eu scripts/build.sh $ENV_ID
+    post_build:
+        commands:
+            #sam deploy batch.yml
+            - bash -eu scripts/deploy.sh $ENV_ID
