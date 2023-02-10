@@ -2,6 +2,26 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: "ECR Create For Batch, Front."
 
 Parameters:
+  # ---------------------------------------------------------
+  # システム共通（全ドメインで共通）※CMNのみのconfに記載
+  # ---------------------------------------------------------
+  CompanyId:
+    Type: String
+  SystemId:
+    Type: String
+  EnvId:
+    Type: String
+  EnvName:
+    Type: String
+  SystemName:
+    Type: String
+  # ---------------------------------------------------------
+  # ドメイン固有
+  # ---------------------------------------------------------
+  SubSystemId:
+    Type: String
+  CicdRepository:
+    Type: String
   SystemOnlineTime:
     Type: String
   ActiveTargetGroupArn:
