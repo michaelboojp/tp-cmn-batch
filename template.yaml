@@ -162,4 +162,104 @@ Resources:
       HealthCheckProtocol: HTTP
       Matcher:
         HttpCode: '200'
+        
+  # ---------------------------------------------------------
+  # ECS Fargate(バッチで利用しない可能性あり。)
+  # ---------------------------------------------------------
+  ScriptRunnerEcsCluster:
+    Type: AWS::ECS::Cluster
+    # DEV環境の場合のみ作成する
+    Condition: isEnvDev
+    Properties:
+      ClusterName: !Sub "${SubSystemId}-ecscluster-${EnvId}-batch"
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${SubSystemId}-ecscluster-${EnvId}-batch"
+        - Key: "Env"
+          Value: !Ref EnvName
+        - Key: "System"
+          Value: !Ref SystemId
+        - Key: "SystemName"
+          Value: !Ref SystemName
+        - Key: "SubSystemId"
+          Value: !Ref SubSystemId
+        - Key: "CicdRepository"
+          Value: !Ref CicdRepository
 
+  ExecS3CopyEcsTaskDefinition:
+     Type: AWS::ECS::TaskDefinition
+     Properties:
+       ContainerDefinitions:
+         - Name: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy-ecs-container"
+           Image:
+             !Join
+               - ''
+               - - {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-ECR-BatchScriptRunnerEcrRepositoryUri'}
+                 - ':latest'
+           Cpu: 2048
+           MemoryReservation: 4096
+           ReadonlyRootFilesystem: true
+           EntryPoint:
+             - "/bin/bash"
+             - "-c"
+           Command:
+             - "bash -eux scripts/exec-s3copy.sh"
+           Environment:
+             - Name: "ENV_SRC_BUCKET"
+               Value: "_PLACEHOLDER_"
+             - Name: "ENV_SRC_PATH"
+               Value: "_PLACEHOLDER_"
+             - Name: "ENV_SRC_FILE"
+               Value: "_PLACEHOLDER_"
+             - Name: "ENV_DST_BUCKET"
+               Value: "_PLACEHOLDER_"
+             - Name: "ENV_DST_PATH"
+               Value: "_PLACEHOLDER_"
+           LogConfiguration:
+             LogDriver: awslogs
+             Options:
+               awslogs-group: !Ref ExecS3CopyEcsLogGroup
+               awslogs-region: !Ref AWS::Region
+               awslogs-stream-prefix: ecs
+       Family: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy"
+       Cpu: 2048
+       Memory: 4096
+       NetworkMode: awsvpc
+       RequiresCompatibilities:
+         - FARGATE
+       #Role Import名要修正
+       TaskRoleArn: {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-IamRole-BatchScriptRunnerEcsTaskRoleArn'}
+       ExecutionRoleArn: {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-IamRole-BatchScriptRunnerEcsTaskExecutionRoleArn'}
+       Tags:
+         - Key: "Name"
+           Value: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy"
+         - Key: "Env"
+           Value: !Ref EnvName
+         - Key: "System"
+           Value: !Ref SystemId
+         - Key: "SystemName"
+           Value: !Ref SystemName
+         - Key: "SubSystemId"
+           Value: !Ref SubSystemId
+         - Key: "CicdRepository"
+           Value: !Ref CicdRepository
+
+   ExecS3CopyEcsLogGroup:
+     Type: AWS::Logs::LogGroup
+     Properties:
+       LogGroupName: !Sub "${SystemId}/${SubSystemId}/${EnvId}/ecs/batch-exec-s3copy"
+       # Set 13 months
+       RetentionInDays: 400
+       Tags:
+         - Key: "Name"
+           Value: !Sub "${SystemId}/${SubSystemId}/${EnvId}/ecs/batch-exec-s3copy"
+         - Key: "Env"
+           Value: !Ref EnvName
+         - Key: "System"
+           Value: !Ref SystemId
+         - Key: "SystemName"
+           Value: !Ref SystemName
+         - Key: "SubSystemId"
+           Value: !Ref SubSystemId
+         - Key: "CicdRepository"
+           Value: !Ref CicdRepository
