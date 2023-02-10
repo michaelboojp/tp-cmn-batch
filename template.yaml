@@ -1,10 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: "ECR Create For Batch, Front."
 
-Parameters:
-  # ---------------------------------------------------------
+Parameters: ###########################################
   # システム共通（全ドメインで共通）※CMNのみのconfに記載
-  # ---------------------------------------------------------
+  ###########################################
   CompanyId:
     Type: String
   SystemId:
@@ -15,174 +14,30 @@ Parameters:
     Type: String
   SystemName:
     Type: String
-  # ---------------------------------------------------------
+  ###########################################
   # ドメイン固有
-  # ---------------------------------------------------------
+  ###########################################
   SubSystemId:
     Type: String
   CicdRepository:
     Type: String
-  SystemOnlineTime:
-    Type: String
-  ActiveTargetGroupArn:
-    Type: String
+
+
+
+Conditions:
+  #環境（EnvName）がDEVの場合　　：true
+  isEnvDev:
+    !Equals [!Ref EnvName, "DEV"]
 
 Resources:
-  # ------------------------------------------------------------#
-  #  ALB Front用
-  # ------------------------------------------------------------#
-  InternetAlb:
-    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
-    Properties:
-      Name: !Sub "alb-cmn-front"
-      Scheme: 'internal'
-      Subnets:
-        - 'subnet-083b00b754ba3beaa'
-        - 'subnet-01ad44f3b349f00e1'
-        - 'subnet-0eb161cab7a96641d'
-      SecurityGroups:
-        - 'sg-08387e4a7f0f6e2ca'
+  # ---------------------------------------------------------
+  # Step Functions
+  # --------------------------------------------------------
 
-
-  # ------------------------------------------------------------#
-  #  ALB Listener for Prod(Blue).
-  # ------------------------------------------------------------#
-  AlbListenerProdTraffic:
-    Type: 'AWS::ElasticLoadBalancingV2::Listener'
-    Properties:
-      DefaultActions:
-        - Type: forward
-          ForwardConfig:
-            TargetGroups:
-              - TargetGroupArn: !Ref AlbTargetGroupBlue
-                Weight: 1
-      LoadBalancerArn: !Ref InternetAlb
-      Port: 80
-      Protocol: HTTP
-
-  # ------------------------------------------------------------#
-  #  ALB Listener for Prod(Blue).
-  # ------------------------------------------------------------#
-  AlbListenerProdTrafficMain:
-    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
-    Properties:
-      Actions:
-        - Type: forward
-          ForwardConfig:
-            TargetGroups:
-              - TargetGroupArn: !Ref ActiveTargetGroupArn
-                Weight: 1
-      Conditions:
-        - Field: path-pattern
-          PathPatternConfig:
-              Values:
-                - '*'
-      ListenerArn: !Ref AlbListenerProdTraffic
-      Priority: 10
-
-  # ------------------------------------------------------------#
-  #  ALB Listener rule (service out) for Prod(Blue).
-  # ------------------------------------------------------------#
-  AlbListenerProdTrafficListenerServiceOut:
-    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
-    Properties:
-      Actions:
-        - Type: fixed-response
-          FixedResponseConfig:
-            ContentType: text/html
-            MessageBody: !Sub |
-                  <!DOCTYPE html>
-                  <html>
-                  <head>
-                  <meta charset="utf-8">
-                  <title>Maintenance</title>
-                  <style>
-                    html{
-                      margin: 0;
-                      padding: 0;
-                      text-align: center;
-                      height: 100%;
-                    }
-                    body{
-                      position: relative;
-                      height: 100%;
-                      background: #eee;
-                    }
-                    div{
-                      position: absolute;
-                      left: 50%;
-                      top: 30%;
-                      margin-left: -300px;
-                      width: 600px;
-                      border: 2px solid #666;
-                      padding: 64px 32px;
-                      box-sizing: border-box;
-                      background: #fff;
-                      text-align: center;
-                    }
-                    .message{
-                      font-size: 34px;
-                      margin-bottom: 24px;
-                      font-weight: bold;
-                    }
-                    .date{
-                      color: #fff;
-                      padding: 8px;
-                      background: #cc0000;
-                      width: 90%;
-                      margin: 0 auto 16px;
-                    }
-                  </style>
-                  </head>
-                  <body>
-                  <div>
-                    <p class="message">ただいまサービス利用時間外です</p>
-                    <p class="date">【サービス利用時間】${SystemOnlineTime}</p>
-                    <p>ご利用の皆様にはご迷惑をおかけし、大変申し訳ございません。<br>
-                    利用開始時間までしばらくお待ちください。</p>
-                  </div>
-                  </body>
-                  </html>
-            StatusCode: 503
-      Conditions:
-        - Field: path-pattern
-          PathPatternConfig:
-              Values:
-                - '*'
-      ListenerArn: !Ref AlbListenerProdTraffic
-      Priority: 15
-
-  # ------------------------------------------------------------#
-  #  ALB Target Group for Blue.
-  # ------------------------------------------------------------#
-  AlbTargetGroupBlue:
-    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
-    Properties:
-      VpcId: 'vpc-0b7100f164a6071dd'
-      Name: !Sub "cmn-tg-test-front-blue"
-      Protocol: HTTP
-      Port: 80
-      TargetType: ip
-      HealthCheckPath: /
-      HealthCheckPort: '80'
-      HealthCheckProtocol: HTTP
-      Matcher:
-        HttpCode: '200'
-
-  AlbTargetGroupGreen:
-    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
-    Properties:
-      VpcId: 'vpc-0b7100f164a6071dd'
-      Name: !Sub "cmn-tg-test-front-green"
-      Protocol: HTTP
-      Port: 80
-      TargetType: ip
-      HealthCheckPath: /
-      HealthCheckPort: '80'
-      HealthCheckProtocol: HTTP
-      Matcher:
-        HttpCode: '200'
-        
+  # ---------------------------------------------------------
+  # Step Functions マスタデータ連携　テーブル
+  # ---------------------------------------------------------
+  
   # ---------------------------------------------------------
   # ECS Fargate(バッチで利用しない可能性あり。)
   # ---------------------------------------------------------
@@ -205,79 +60,84 @@ Resources:
           Value: !Ref CicdRepository
 
   ExecS3CopyEcsTaskDefinition:
-     Type: AWS::ECS::TaskDefinition
-     Properties:
-       ContainerDefinitions:
-         - Name: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy-ecs-container"
-           Image:
-             !Join
-               - ''
-               - - {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-ECR-BatchScriptRunnerEcrRepositoryUri'}
-                 - ':latest'
-           Cpu: 2048
-           MemoryReservation: 4096
-           ReadonlyRootFilesystem: true
-           EntryPoint:
-             - "/bin/bash"
-             - "-c"
-           Command:
-             - "bash -eux scripts/exec-s3copy.sh"
-           Environment:
-             - Name: "ENV_SRC_BUCKET"
-               Value: "_PLACEHOLDER_"
-             - Name: "ENV_SRC_PATH"
-               Value: "_PLACEHOLDER_"
-             - Name: "ENV_SRC_FILE"
-               Value: "_PLACEHOLDER_"
-             - Name: "ENV_DST_BUCKET"
-               Value: "_PLACEHOLDER_"
-             - Name: "ENV_DST_PATH"
-               Value: "_PLACEHOLDER_"
-           LogConfiguration:
-             LogDriver: awslogs
-             Options:
-               awslogs-group: !Ref ExecS3CopyEcsLogGroup
-               awslogs-region: !Ref AWS::Region
-               awslogs-stream-prefix: ecs
-       Family: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy"
-       Cpu: 2048
-       Memory: 4096
-       NetworkMode: awsvpc
-       RequiresCompatibilities:
-         - FARGATE
-       #Role Import名要修正
-       TaskRoleArn: {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-IamRole-BatchScriptRunnerEcsTaskRoleArn'}
-       ExecutionRoleArn: {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-IamRole-BatchScriptRunnerEcsTaskExecutionRoleArn'}
-       Tags:
-         - Key: "Name"
-           Value: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy"
-         - Key: "Env"
-           Value: !Ref EnvName
-         - Key: "System"
-           Value: !Ref SystemId
-         - Key: "SystemName"
-           Value: !Ref SystemName
-         - Key: "SubSystemId"
-           Value: !Ref SubSystemId
-         - Key: "CicdRepository"
-           Value: !Ref CicdRepository
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy-ecs-container"
+          Image:
+            !Join
+              - ''
+              - - {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-ECR-BatchScriptRunnerEcrRepositoryUri'}
+                - ':latest'
+          Cpu: 2048
+          MemoryReservation: 4096
+          ReadonlyRootFilesystem: true
+          EntryPoint:
+            - "/bin/bash"
+            - "-c"
+          Command:
+            - "bash -eux scripts/exec-s3copy.sh"
+          Environment:
+            - Name: "ENV_SRC_BUCKET"
+              Value: "_PLACEHOLDER_"
+            - Name: "ENV_SRC_PATH"
+              Value: "_PLACEHOLDER_"
+            - Name: "ENV_SRC_FILE"
+              Value: "_PLACEHOLDER_"
+            - Name: "ENV_DST_BUCKET"
+              Value: "_PLACEHOLDER_"
+            - Name: "ENV_DST_PATH"
+              Value: "_PLACEHOLDER_"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref ExecS3CopyEcsLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+      Family: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy"
+      Cpu: 2048
+      Memory: 4096
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      #Role Import名要修正
+      TaskRoleArn: {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-IamRole-BatchScriptRunnerEcsTaskRoleArn'}
+      ExecutionRoleArn: {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-IamRole-BatchScriptRunnerEcsTaskExecutionRoleArn'}
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy"
+        - Key: "Env"
+          Value: !Ref EnvName
+        - Key: "System"
+          Value: !Ref SystemId
+        - Key: "SystemName"
+          Value: !Ref SystemName
+        - Key: "SubSystemId"
+          Value: !Ref SubSystemId
+        - Key: "CicdRepository"
+          Value: !Ref CicdRepository
+          
 
+
+  # ---------------------------------------------------------
+  # CloudWatch Logs
+  # ---------------------------------------------------------
   ExecS3CopyEcsLogGroup:
-     Type: AWS::Logs::LogGroup
-     Properties:
-       LogGroupName: !Sub "${SystemId}/${SubSystemId}/${EnvId}/ecs/batch-exec-s3copy"
-       # Set 13 months
-       RetentionInDays: 400
-       Tags:
-         - Key: "Name"
-           Value: !Sub "${SystemId}/${SubSystemId}/${EnvId}/ecs/batch-exec-s3copy"
-         - Key: "Env"
-           Value: !Ref EnvName
-         - Key: "System"
-           Value: !Ref SystemId
-         - Key: "SystemName"
-           Value: !Ref SystemName
-         - Key: "SubSystemId"
-           Value: !Ref SubSystemId
-         - Key: "CicdRepository"
-           Value: !Ref CicdRepository
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "${SystemId}/${SubSystemId}/${EnvId}/ecs/batch-exec-s3copy"
+      # Set 13 months
+      RetentionInDays: 400
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${SystemId}/${SubSystemId}/${EnvId}/ecs/batch-exec-s3copy"
+        - Key: "Env"
+          Value: !Ref EnvName
+        - Key: "System"
+          Value: !Ref SystemId
+        - Key: "SystemName"
+          Value: !Ref SystemName
+        - Key: "SubSystemId"
+          Value: !Ref SubSystemId
+        - Key: "CicdRepository"
+          Value: !Ref CicdRepository
