@@ -244,7 +244,7 @@ Resources:
          - Key: "CicdRepository"
            Value: !Ref CicdRepository
 
-   ExecS3CopyEcsLogGroup:
+  ExecS3CopyEcsLogGroup:
      Type: AWS::Logs::LogGroup
      Properties:
        LogGroupName: !Sub "${SystemId}/${SubSystemId}/${EnvId}/ecs/batch-exec-s3copy"
