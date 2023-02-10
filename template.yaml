@@ -168,8 +168,6 @@ Resources:
   # ---------------------------------------------------------
   ScriptRunnerEcsCluster:
     Type: AWS::ECS::Cluster
-    # DEV環境の場合のみ作成する
-    Condition: isEnvDev
     Properties:
       ClusterName: !Sub "${SubSystemId}-ecscluster-${EnvId}-batch"
       Tags:
