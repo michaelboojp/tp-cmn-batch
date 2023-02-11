@@ -7,5 +7,5 @@ phases:
             - bash -eu scripts/build.sh $ENV_ID
     post_build:
         commands:
-            #sam deploy iam.yaml, sg.yaml, ecr.yml, rds.yml, athena.yml
+            #sam deploy batch.yml
             - bash -eu scripts/deploy.sh $ENV_ID

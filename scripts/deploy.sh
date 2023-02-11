@@ -28,21 +28,23 @@ SYSTEM_NAME=$(aws cloudformation list-exports | jq '[.Exports[]]' | jq 'map(sele
 LF="
 "
 
-LOAD_BALANCER_ARN=$(aws elbv2 describe-load-balancers --names ${SYSTEM_ID}-alb-${SYSTEM_ID}-front | jq -r '.LoadBalancers[].LoadBalancerArn')
-echo "testing" 
-echo ${LOAD_BALANCER_ARN}
-TARGET_GROUP_ARN=$(aws elbv2 describe-target-groups --load-balancer-arn ${LOAD_BALANCER_ARN} | jq -r '.TargetGroups[0].TargetGroupArn')
+# LOAD_BALANCER_ARN=$(aws elbv2 describe-load-balancers --names ${SYSTEM_ID}-alb-${SYSTEM_ID}-front | jq -r '.LoadBalancers[].LoadBalancerArn')
+# echo "testing" 
+# echo ${LOAD_BALANCER_ARN}
+# TARGET_GROUP_ARN=$(aws elbv2 describe-target-groups --load-balancer-arn ${LOAD_BALANCER_ARN} | jq -r '.TargetGroups[0].TargetGroupArn')
 
 # confから取得(ドメイン固有)
-PARAMS=$(cat envs/${ENV_ID}.conf | grep -v '^ *#' | grep -e '^.*=.*$' | sed "s/^\(.*\)=\(.*\)$/\1='\2'/g")
+PARAMS=$(cat envs/${ENV_ID}.conf | grep -v '^ *#' | grep -e '^.*=.*$' | grep -v '*' | sed "s/^\(.*\)=\(.*\)$/\1='\2'/g")
+PARAMS_WITH_ASTERISK=$(cat envs/${ENV_ID}.conf | grep -v '^ *#' | grep -e '^.*=.*$' | grep '*' | sed "s/^\(.*\)=\(.*\)$/\1='\2'/g" | tr '\n' ' ')
+
 # CloudFormationからシェル変数に取得した値をパラメータ群に追加
 PARAMS="${PARAMS}${LF}CompanyId='${COMPANY_ID}'"
 PARAMS="${PARAMS}${LF}SystemId='${SYSTEM_ID}'"
 PARAMS="${PARAMS}${LF}EnvId='${ENV_ID}'"
 PARAMS="${PARAMS}${LF}EnvName='${ENVNAME}'"
 PARAMS="${PARAMS}${LF}SystemName='${SYSTEM_NAME}'"
-PARAMS="${PARAMS}${LF}ActiveTargetGroupArn='${TARGET_GROUP_ARN}'"
-PARAMS="${PARAMS}${LF}"
+# PARAMS="${PARAMS}${LF}ActiveTargetGroupArn='${TARGET_GROUP_ARN}'"
+# PARAMS="${PARAMS}${LF}"
 
 SUB_SYSTEM_ID=$(cat envs/${ENV_ID}.conf | grep ^SubSystemId | head -1 | cut -d= -f2-)
 S3_CICD_BUCKET_NAME=$(cat envs/${ENV_ID}.conf | grep ^S3CicdBucketName | head -1 | cut -d= -f2-)
@@ -57,11 +59,14 @@ PARAMS_star=$(cat envs/${ENV_ID}.conf | grep -v '^ *#' | grep '*' | grep -e '^.*
 # STACK_NAME_PREFIX=${COMPANY_ID}${SYSTEM_ID}${SUB_SYSTEM_ID}${ENV_ID}
 STACK_NAME_PREFIX=${COMPANY_ID^}${SYSTEM_ID^}${SUB_SYSTEM_ID^}${ENV_ID^}
 
+#AWS Cloudformationから取得
+# S3_CICD_BUCKET_NAME=$(aws cloudformation list-exports | jq '[.Exports[]]' | jq 'map(select( .Name == "'${ENV_ID}'-'${SUB_SYSTEM_ID}'-S3-CicdBucketName" ))' | jq '.[].Value' | head -1  | sed 's/"//g' )
+
 echo """
 ===============================
 Parameters
 ===============================
-${PARAMS}
+S3_CICD_BUCKET_NAME：${S3_CICD_BUCKET_NAME}
 ===============================
 """
 
@@ -88,7 +93,7 @@ deploy_stack () {
   echo sam deploy \
     --stack-name ${STACK_NAME} \
     ${TEMPLATE_FILE_OPT} \
-    --parameter-overrides \"${PARAMS} """${PARAMS_star}"""\" \
+    --parameter-overrides \"${PARAMS} """${PARAMS_WITH_ASTERISK}""" \" \
     --capabilities CAPABILITY_NAMED_IAM \
     --no-fail-on-empty-changeset \
     --region ap-northeast-1 \
