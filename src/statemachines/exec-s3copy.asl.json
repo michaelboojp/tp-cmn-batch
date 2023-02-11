@@ -1,0 +1,82 @@
+{
+    "StartAt": "Execute Sample Script",
+    "States": {
+        "Execute Sample Script": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::ecs:runTask.sync",
+            "Parameters": {
+                "LaunchType":"FARGATE",
+                "Cluster": "${S3CopyEcsClusterArn}",
+                "TaskDefinition": "${S3CopyEcsTaskDefinitionArn}",
+                "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                        "Subnets": [
+                            "${PriLSubnet1}",
+                            "${PriLSubnet2}"
+                        ],
+                        "SecurityGroups": [
+                            "${S3CopyEcsSecurityGroupId}"
+                        ],
+                        "AssignPublicIp": "DISABLED"
+                    }
+                },
+                "Overrides": {
+                    "ContainerOverrides": [
+                        {
+                            "Name": "${S3CopyEcsContainerName}",
+                            "Environment": [
+                                {
+                                    "Name": "ENV_SRC_BUCKET",
+                                    "Value": "tp-bao-s3-cmn-batch3-dev"
+                                },
+                                {
+                                    "Name": "ENV_SRC_PATH",
+                                    "Value": "from"
+                                },
+                                {
+                                    "Name": "ENV_SRC_FILE",
+                                    "Value": "data.txt"
+                                },
+                                {
+                                    "Name": "ENV_DST_BUCKET",
+                                    "Value": "tp-bao-s3-cmn-batch3-dev"
+                                },
+                                {
+                                    "Name": "ENV_DST_PATH",
+                                    "Value": "to"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 10,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 1.0
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "ResultPath": "$.error",
+                    "Next": "Fail"
+                }
+            ],
+            "ResultPath": null,
+            "Next": "Succeed"
+        },
+        "Succeed": {
+            "Type": "Succeed"
+        },
+        "Fail": {
+            "Type": "Fail"
+        }
+    }
+}

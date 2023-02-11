@@ -32,11 +32,38 @@ Conditions:
 Resources:
   # ---------------------------------------------------------
   # Step Functions
-  # --------------------------------------------------------
-
   # ---------------------------------------------------------
-  # Step Functions マスタデータ連携　テーブル
-  # ---------------------------------------------------------
+  ExecS3CopyStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: src/statemachines/exec-s3copy.asl.json
+      DefinitionSubstitutions:
+        PriLSubnet1: {'Fn::ImportValue': !Sub '${EnvId}-cmn-PriLSubnet1'}
+        PriLSubnet2: {'Fn::ImportValue': !Sub '${EnvId}-cmn-PriLSubnet2'}
+        PriMSubnet1: {'Fn::ImportValue': !Sub '${EnvId}-cmn-PriMSubnet1'}
+        PriMSubnet2: {'Fn::ImportValue': !Sub '${EnvId}-cmn-PriMSubnet2'}
+        S3CopyEcsClusterArn: !GetAtt ScriptRunnerEcsCluster.Arn
+        S3CopyEcsTaskDefinitionArn: !Ref ExecS3CopyEcsTaskDefinition
+        #SG Import名要修正
+        S3CopyEcsSecurityGroupId: {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-SG-BatchEcsSecurityGroupId'}
+        S3CopyEcsContainerName: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy-ecs-container"
+      Events:
+        HourlySchedule:
+          Type: Schedule
+          Properties:
+            Description: Every hour
+            Enabled: False  #  Set to "True" to enable
+            # See: https://docs.aws.amazon.com/ja_jp/eventbridge/latest/userguide/eb-create-rule-schedule.html
+            Schedule: "cron(0 * * * ? *)"
+      Role: {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-IamRole-BatchScriptRunnerStateMachineRoleArn'}
+      Tags:
+        Name: "Execs3copyStateMachine"
+        Env: !Ref EnvName
+        System: !Ref SystemId
+        SystemName: !Ref SystemName
+        SubSystemId: !Ref SubSystemId
+        CicdRepository: !Ref CicdRepository
+          
   
   # ---------------------------------------------------------
   # ECS Fargate(バッチで利用しない可能性あり。)
@@ -116,7 +143,7 @@ Resources:
           Value: !Ref SubSystemId
         - Key: "CicdRepository"
           Value: !Ref CicdRepository
-          
+
 
 
   # ---------------------------------------------------------
