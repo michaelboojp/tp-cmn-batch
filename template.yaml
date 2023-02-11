@@ -39,10 +39,8 @@ Resources:
     Properties:
       DefinitionUri: src/statemachines/exec-s3copy.asl.json
       DefinitionSubstitutions:
-        PriLSubnet1: {'Fn::ImportValue': !Sub '${EnvId}-cmn-PriLSubnet1'}
-        PriLSubnet2: {'Fn::ImportValue': !Sub '${EnvId}-cmn-PriLSubnet2'}
-        PriMSubnet1: {'Fn::ImportValue': !Sub '${EnvId}-cmn-PriMSubnet1'}
-        PriMSubnet2: {'Fn::ImportValue': !Sub '${EnvId}-cmn-PriMSubnet2'}
+        PriLSubnet1: {'Fn::ImportValue': !Sub '${EnvId}-cmn-PubSubnet1'}
+        PriLSubnet2: {'Fn::ImportValue': !Sub '${EnvId}-cmn-PubSubnet2'}
         S3CopyEcsClusterArn: !GetAtt ScriptRunnerEcsCluster.Arn
         S3CopyEcsTaskDefinitionArn: !Ref ExecS3CopyEcsTaskDefinition
         #SG Import名要修正
