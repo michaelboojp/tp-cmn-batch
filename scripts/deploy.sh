@@ -93,6 +93,8 @@ deploy_stack () {
     --no-fail-on-empty-changeset \
     --region ap-northeast-1 \
     --no-confirm-changeset \
+    --no-confirm-changeset \
+    --s3-bucket tp-bao-s3-cmn-batch3-dev \
     | bash
 }
 
