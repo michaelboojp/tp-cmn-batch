@@ -17,7 +17,8 @@
                         "SecurityGroups": [
                             "${S3CopyEcsSecurityGroupId}"
                         ],
-                        "AssignPublicIp": "ENABLE"
+                        "AssignPublicIp": "DISABLED",
+                        "_comment": "AssignPublicIp should be disabled"
                     }
                 },
                 "Overrides": {
@@ -56,7 +57,7 @@
                         "States.TaskFailed"
                     ],
                     "IntervalSeconds": 10,
-                    "MaxAttempts": 2,
+                    "MaxAttempts": 1,
                     "BackoffRate": 1.0
                 }
             ],
