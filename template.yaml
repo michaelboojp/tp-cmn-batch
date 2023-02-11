@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: "ECR Create For Batch, Front."
+Transform: AWS::Serverless-2016-10-31
+Description: "StateMachine, ECS Cluster, ECS TaskDefinition, LogGroup Create for Batch."
 
 Parameters: ###########################################
   # システム共通（全ドメインで共通）※CMNのみのconfに記載
