@@ -1,6 +1,10 @@
 version: 0.2
 
 phases:
+    build:
+        commands:
+            #docker build, push
+            - bash -eu scripts/build.sh $ENV_ID
     post_build:
         commands:
             #sam deploy iam.yaml, sg.yaml, ecr.yml, rds.yml, athena.yml
