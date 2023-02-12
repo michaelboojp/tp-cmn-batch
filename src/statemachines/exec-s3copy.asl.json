@@ -17,7 +17,7 @@
                         "SecurityGroups": [
                             "${S3CopyEcsSecurityGroupId}"
                         ],
-                        "AssignPublicIp": "DISABLED",
+                        "AssignPublicIp": "ENABLED",
                         "_comment": "AssignPublicIp should be disabled"
                     }
                 },
