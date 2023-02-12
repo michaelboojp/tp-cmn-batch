@@ -114,12 +114,12 @@ Resources:
               Value: "_PLACEHOLDER_"
             - Name: "ENV_DST_PATH"
               Value: "_PLACEHOLDER_"
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref ExecS3CopyEcsLogGroup
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: ecs
+          # LogConfiguration:
+          #   LogDriver: awslogs
+          #   Options:
+          #     awslogs-group: !Ref ExecS3CopyEcsLogGroup
+          #     awslogs-region: !Ref AWS::Region
+          #     awslogs-stream-prefix: ecs
       Family: !Sub "${SubSystemId}-ecstask-${EnvId}-batch-exec-s3copy"
       Cpu: 2048
       Memory: 4096
