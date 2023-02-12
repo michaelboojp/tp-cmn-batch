@@ -64,10 +64,10 @@ fi
 #----------------------------------------
 # ファイルコピーする
 rmsg=$(aws s3 cp s3://$ENV_SRC_BUCKET/$ENV_SRC_PATH/$ENV_SRC_FILE s3://$ENV_DST_BUCKET/$ENV_DST_PATH/)
+echo $rmsg
 rc=$?
 
 #debug
-#echo $rc
 
 # メッセージ処理（要るかな？）
 if [ $rc != 0 ]; then
