@@ -53,7 +53,7 @@ Resources:
             Description: Every hour
             Enabled: False  #  Set to "True" to enable
             # See: https://docs.aws.amazon.com/ja_jp/eventbridge/latest/userguide/eb-create-rule-schedule.html
-            Schedule: "cron(1 * * * ? *)"
+            Schedule: "cron(0 * * * ? *)"
       Role: {'Fn::ImportValue': !Sub '${EnvId}-${SubSystemId}-IamRole-BatchScriptRunnerStateMachineRoleArn'}
       Tags:
         Name: "Execs3copyStateMachine"
