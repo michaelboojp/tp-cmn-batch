@@ -27,7 +27,7 @@
                             "Environment": [
                                 {
                                     "Name": "ENV_SRC_BUCKET",
-                                    "Value": "tp-bao-s3-cmn-batch3-dev"
+                                    "Value": "tp-baov1-s3-cmn-batch3-dev"
                                 },
                                 {
                                     "Name": "ENV_SRC_PATH",
@@ -39,7 +39,7 @@
                                 },
                                 {
                                     "Name": "ENV_DST_BUCKET",
-                                    "Value": "tp-bao-s3-cmn-batch3-dev"
+                                    "Value": "tp-baov1-s3-cmn-batch3-dev"
                                 },
                                 {
                                     "Name": "ENV_DST_PATH",

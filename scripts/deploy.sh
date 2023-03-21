@@ -99,7 +99,7 @@ deploy_stack () {
     --region ap-northeast-1 \
     --no-confirm-changeset \
     --no-confirm-changeset \
-    --s3-bucket tp-bao-s3-cmn-batch3-dev \
+    --s3-bucket tp-baov1-s3-cmn-batch3-dev \
     | bash
 }
 

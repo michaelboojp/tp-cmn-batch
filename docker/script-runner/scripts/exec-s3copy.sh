@@ -20,10 +20,10 @@
 # 前処理
 #----------------------------------------
 # debug
-ENV_SRC_BUCKET='tp-bao-s3-cmn-batch3-dev'
+ENV_SRC_BUCKET='tp-baov1-s3-cmn-batch3-dev'
 ENV_SRC_PATH='from'
 ENV_SRC_FILE='data.txt'
-ENV_DST_BUCKET='tp-bao-s3-cmn-batch3-dev'
+ENV_DST_BUCKET='tp-baov1-s3-cmn-batch3-dev'
 ENV_DST_PATH='to'
 
 
